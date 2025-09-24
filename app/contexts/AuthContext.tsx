@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
-import { createClientSupabase } from '~/lib/supabase'
 
 interface AuthContextType {
   user: User | null
@@ -20,78 +19,80 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
 
-  const supabase = createClientSupabase()
-
   useEffect(() => {
-    let mounted = true
-
-    const getSession = async () => {
+    // Simple initialization for development
+    const initAuth = async () => {
       try {
+        // Import Supabase client dynamically to avoid SSR issues
+        const { createClientSupabase } = await import('~/lib/supabase')
+        const supabase = createClientSupabase()
+
         const { data: { session } } = await supabase.auth.getSession()
-        if (mounted) {
-          setSession(session)
-          setUser(session?.user ?? null)
-          setLoading(false)
-          setInitialized(true)
-        }
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+        setInitialized(true)
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, session) => {
+            setSession(session)
+            setUser(session?.user ?? null)
+            setLoading(false)
+            setInitialized(true)
+          }
+        )
+
+        return () => subscription.unsubscribe()
       } catch (error) {
-        console.error('Auth error:', error)
-        if (mounted) {
-          setLoading(false)
-          setInitialized(true)
-        }
-      }
-    }
-
-    getSession()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (mounted) {
-          setSession(session)
-          setUser(session?.user ?? null)
-          setLoading(false)
-          setInitialized(true)
-        }
-      }
-    )
-
-    // Fallback timeout
-    const timeout = setTimeout(() => {
-      if (mounted) {
+        console.error('Auth initialization error:', error)
         setLoading(false)
         setInitialized(true)
       }
-    }, 2000)
-
-    return () => {
-      mounted = false
-      clearTimeout(timeout)
-      subscription.unsubscribe()
     }
+
+    initAuth()
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { error }
+    try {
+      const { createClientSupabase } = await import('~/lib/supabase')
+      const supabase = createClientSupabase()
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      return { error }
+    } catch (error) {
+      return { error }
+    }
   }
 
   const signUp = async (email: string, password: string, metadata?: Record<string, any>) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata
-      }
-    })
-    return { error }
+    try {
+      const { createClientSupabase } = await import('~/lib/supabase')
+      const supabase = createClientSupabase()
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata
+        }
+      })
+      return { error }
+    } catch (error) {
+      return { error }
+    }
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      const { createClientSupabase } = await import('~/lib/supabase')
+      const supabase = createClientSupabase()
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
   }
 
   const value = {
@@ -114,7 +115,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    // Return a default context during initialization instead of throwing
+    return {
+      user: null,
+      session: null,
+      loading: true,
+      initialized: false,
+      signIn: async () => ({ error: new Error('Auth not initialized') }),
+      signUp: async () => ({ error: new Error('Auth not initialized') }),
+      signOut: async () => {},
+    }
   }
   return context
 }

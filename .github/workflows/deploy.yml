@@ -1,18 +1,14 @@
-name: Deploy to Cloudflare
+name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches:
-      - main
-      - staging
-  pull_request:
     branches:
       - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy
+    name: Deploy to Cloudflare Pages
     steps:
       - uses: actions/checkout@v4
       
@@ -21,7 +17,6 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
       
       - name: Install dependencies
         run: npm ci
@@ -29,37 +24,48 @@ jobs:
       - name: Build application
         run: npm run build
       
-      - name: Deploy to Cloudflare Workers (Staging)
-        if: github.ref == 'refs/heads/staging'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env staging
+      - name: Create index.html for Pages
+        run: |
+          # Create a simple index.html that loads the React app
+          cat > build/client/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>aiCreatorKit - Link in Bio Tool</title>
+            <meta name="description" content="Create beautiful link in bio pages with aiCreatorKit. Share all your links in one place." />
+            <link rel="icon" href="/favicon.ico" />
+            <link rel="manifest" href="/manifest.json" />
+            <script type="module" crossorigin src="/assets/entry.client-BxCqSuAx.js"></script>
+            <link rel="stylesheet" crossorigin href="/assets/root-C09zQp9r.css">
+          </head>
+          <body>
+            <div id="root">
+              <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: system-ui, sans-serif;">
+                <div style="text-align: center;">
+                  <h1>aiCreatorKit</h1>
+                  <p>Loading your link in bio tool...</p>
+                  <div style="margin-top: 20px;">
+                    <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <style>
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            </style>
+          </body>
+          </html>
+          EOF
       
-      - name: Deploy to Cloudflare Workers (Production)
-        if: github.ref == 'refs/heads/main'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env production
-      
-      - name: Deploy to Cloudflare Pages (Staging)
-        if: github.ref == 'refs/heads/staging'
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: aicreatorkit-app-staging
-          directory: build/client
-      
-      - name: Deploy to Cloudflare Pages (Production)
-        if: github.ref == 'refs/heads/main'
+      - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: aicreatorkit-app
           directory: build/client
-

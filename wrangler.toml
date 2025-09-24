@@ -1,0 +1,39 @@
+name = "aicreatorkit-app"
+main = "src/worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+name = "aicreatorkit-app"
+
+[env.staging]
+name = "aicreatorkit-app-staging"
+
+# Environment variables (set via wrangler secret put)
+# SUPABASE_URL
+# SUPABASE_ANON_KEY
+# SUPABASE_SERVICE_KEY
+
+# Build configuration
+# [build]
+# command = "npm run build"
+
+# Pages configuration for static assets
+# Note: Pages deployment is handled separately via wrangler pages deploy
+
+# KV namespaces for caching (optional)
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "your-kv-namespace-id"
+# preview_id = "your-preview-kv-namespace-id"
+
+# Durable Objects (if needed for real-time features)
+# [[durable_objects.bindings]]
+# name = "PROFILE_CACHE"
+# class_name = "ProfileCache"
+
+# R2 buckets for file storage (if needed)
+# [[r2_buckets]]
+# binding = "ASSETS"
+# bucket_name = "aicreatorkit-assets"
+

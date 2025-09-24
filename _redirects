@@ -1,0 +1,10 @@
+# Cloudflare Pages redirects configuration
+# Handle client-side routing for React Router
+/*    /index.html   200
+
+# API routes should go to the Worker
+/api/*    https://aicreatorkit-app.your-subdomain.workers.dev/api/:splat    200
+
+# Custom domain redirects (if using custom domains)
+# www.yourdomain.com/*    https://yourdomain.com/:splat    301
+

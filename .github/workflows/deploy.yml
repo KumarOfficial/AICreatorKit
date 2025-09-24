@@ -21,17 +21,13 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: 'aiCreatorKit-app/package-lock.json'
+          cache-dependency-path: 'package-lock.json'
       
       - name: Install dependencies
-        run: |
-          cd aiCreatorKit-app
-          npm ci
+        run: npm ci
       
       - name: Build application
-        run: |
-          cd aiCreatorKit-app
-          npm run build
+        run: npm run build
       
       - name: Deploy to Cloudflare Workers (Staging)
         if: github.ref == 'refs/heads/staging'
@@ -40,7 +36,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --env staging
-        working-directory: aiCreatorKit-app
       
       - name: Deploy to Cloudflare Workers (Production)
         if: github.ref == 'refs/heads/main'
@@ -49,7 +44,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --env production
-        working-directory: aiCreatorKit-app
       
       - name: Deploy to Cloudflare Pages (Staging)
         if: github.ref == 'refs/heads/staging'
@@ -58,7 +52,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: aicreatorkit-app-staging
-          directory: aiCreatorKit-app/build/client
+          directory: build/client
       
       - name: Deploy to Cloudflare Pages (Production)
         if: github.ref == 'refs/heads/main'
@@ -67,5 +61,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: aicreatorkit-app
-          directory: aiCreatorKit-app/build/client
+          directory: build/client
 
